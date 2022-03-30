@@ -1,20 +1,10 @@
 <script lang="ts" setup>
 import { reactive, computed, onMounted } from 'vue';
-const props = defineProps({data: Object});
+const props = defineProps({data: Object, clipPath: String});
 const obj: { defaultNum: number, space: number } = reactive({
     defaultNum: 121.5, // 121.5,
     space: 1
 });
-
-const handleAdd = () => {
-    obj.space += 0.1;
-    obj.defaultNum = obj.defaultNum * obj.space;
-}
-
-const handleMinus = () => {
-    obj.space -= 0.1;
-    obj.defaultNum = obj.defaultNum * obj.space;
-}
 const slices = computed(() => {
     const data = props.data?.slices;
     if(!data) return;
@@ -69,7 +59,6 @@ const slices = computed(() => {
         area: 'M' + firstX + totalStr + 'Z',
         line: 'M' + firstX + lineStr + 'Z',
         bgStr
-
     };
 })
 
@@ -77,46 +66,29 @@ const slices = computed(() => {
 
 </script>
 <template>
-<h1>{{props.data?.referenceValue}}</h1>
-<button @click="handleAdd">每次+0.1</button>
-<button @click="handleMinus">每次+0.1</button>
-<div class="profile">
-<svg id="profile" style='border:1px solid #333'>
-    <defs>
-        <clipPath id="contentClip">
-            <rect x="0" y="0" width="100%" height="243" style='stroke:pink;'></rect>
-        </clipPath>
-    </defs>
 
-    
     <g class="tolerance">
-        <g class="area" clip-path="url(#contentClip)">
+        <g class="area" :clip-path="clipPath">
             <path class="area" shape-rendering="crispEdges" :d='slices?.bgStr'></path>
         </g>
     </g>
     <g class="thicknessProfile">
-        <g class="area" style='fill: #e40b28' clip-path="url(#contentClip)">
+        <g class="area" style='fill: #e40b28' :clip-path="clipPath">
             <path class="area" shape-rendering="crispEdges" :d='slices?.area'></path>
         </g>
     </g>
     
     <g class="normalizedThicknessProfile">
-        <g class="area" style='fill: rgb(0, 185, 109)' clip-path="url(#contentClip)">
+        <g class="area" style='fill: rgb(0, 185, 109)' :clip-path="clipPath">
             <path class="area" shape-rendering="crispEdges" :d='slices?.area'></path>
         </g>
-        <g class="line" style='stroke: rgb(0, 185, 109)' clip-path="url(#contentClip)">
+        <g class="line" style='stroke: rgb(0, 185, 109)' :clip-path="clipPath">
             <path class="line" shape-rendering="crispEdges" :d='slices?.line'></path>
         </g>
     </g>
 
-    
-</svg>
-
-</div>
 </template>
 <style lang="less">
-.profile { width: 1180px; height: 268px;}
-#profile { width: calc(100% + 1); /*height: calc(100% - 32px);*/  height: 268px;}
 
 .tolerance path {
     fill: #2ad402;

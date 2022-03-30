@@ -6,6 +6,9 @@ import { reactive, onMounted, onBeforeUnmount } from 'vue';
 import moment from 'moment';
 import { getDateArray } from './utils/common'
 import BarSvg from './views/html/BarSvg.vue'
+import Map from './views/html/Map.vue'
+import NDCRuler from './views/html/NDCRuler.vue'
+import Profile from './views/Profile/index.vue';
 
 interface IbFilmTimeLine {
 	_class?: string;
@@ -39,7 +42,6 @@ onMounted(() => {
 		getBFilmTimeLine()
 	}, 20000)
 })
-
 const getBFilmTimeLine = async () => {
 	start = moment(new Date()).subtract(12, 'hours').utc().toISOString();
 	end = moment(new Date()).utc().toISOString();
@@ -77,8 +79,9 @@ const getBFilmTimeLine = async () => {
 		clearInterval(timer);
 		timer = null;
 	} finally {
+		// 厚度数据接口
 		api.getProfile4scanLatest().then(res => {
-			console.log('res', res)
+			console.log('厚度数据', res)
 			data.profile4scanLatesData = res;
 		})
 	}
@@ -91,14 +94,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<!-- <img alt="Vue logo" src="./assets/logo.png" /> -->
 	<BFilmTimeLine :data="data.bFilmTimeLine" :timeLineArr="data.timeLineArr" />
+	<div style="width: 1480px; height:350px; min-height: 300px;">
+		<Profile :data="data.profile4scanLatesData" />
+	</div>
+	<!-- <img alt="Vue logo" src="./assets/logo.png" /> -->
 	<!-- <ul>
 		<li v-for="item in data.bFilmTimeLine">{{item.labelId}}</li>
 	</ul> -->
+
 	<Profile4scanLates :data="data.profile4scanLatesData" />
 	<div>壮壮图</div>
 	<BarSvg />
+	<Map />
+	<NDCRuler :data="data.profile4scanLatesData" />
 </template>
 
 
