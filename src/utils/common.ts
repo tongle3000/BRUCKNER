@@ -2,9 +2,9 @@ import moment from 'moment';
 
 /**
  * 算出12个小时梅分钟的时间数组
- * @param endDate 
- * @param splitTime 
- * @param count 
+ * @param endDate 最新时间
+ * @param splitTime 5分钟一格
+ * @param count 12小时总共多少个
  * @returns 
  */
 export const getDateArray = (endDate?: any, splitTime?: number, count?: number) => {
@@ -17,17 +17,22 @@ export const getDateArray = (endDate?: any, splitTime?: number, count?: number) 
     if (!count) {
       count = 12 * 12;
     }
+	// 获取最新时间转换成毫秒
     let endTime = endDate.getTime();
+	// 最新时间除以5分钟的 余数
     const mod = endTime % splitTime;
-    console.log(mod, endTime)
+
     if (mod > 0) {
-      endTime -= mod;
+      endTime -= mod; // 减去 得到最新的5分钟倍数的 时间；
     }
-    console.log(mod, endTime)
+
     var dateArray = [];
+	// 循环 144次 （144格 5分钟每格）
     while (count-- > 0) {
       var d = new Date();
+	  // 设置每个5分钟倍数的时间
       d.setTime(endTime - count * splitTime);
+	  // 转换成时分，推到数组里
       dateArray.push(moment(d).format('HH:mm'));
     }
     return dateArray;
@@ -40,7 +45,7 @@ export const getDateArray = (endDate?: any, splitTime?: number, count?: number) 
  * @param rulerLeft 常量，62；
  */
 
-export const dragX = (e: any, ruler: { rulerLeft:number, maxWidth:number}, rulerLeft:number) => {
+export const dragX = (e: any, ruler: { rulerLeft:number}, width: any, rulerLeft:number) => {
 
 	const startX = e.clientX;
 	const num = ruler.rulerLeft;
@@ -48,7 +53,7 @@ export const dragX = (e: any, ruler: { rulerLeft:number, maxWidth:number}, ruler
 	// 拖动，改变响应性对象里的值。
 	document.onmousemove = (e:any) => {
 		const distance = e.clientX - startX;
-		if(num + distance >= rulerLeft && num + distance <= ruler.maxWidth) {
+		if(num + distance >= rulerLeft && num + distance <= width) {
 			ruler.rulerLeft = num + distance;
 		}
 	}

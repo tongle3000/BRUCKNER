@@ -1,7 +1,12 @@
 <script lang="ts" setup>
 import * as icons from '../utils/icons';
+defineProps<{ data: any, timeLineArr: any }>();
+const left = 10; // 左边预留10像素的宽度，好显示时间；
+const fiveMinuteWidth = 1880 / (12 * 12); // 5分钟的宽度
+const splitTime = 5 * 60 * 1000; // 5分钟时间
+const firstWidthTime = splitTime - new Date().getTime() % splitTime; // 首个宽度的时间(毫秒)
+const firstWidth = firstWidthTime * fiveMinuteWidth / splitTime; // 换算成宽度px
 
-defineProps<{ data: any[], timeLineArr: string [] }>();
 const obj:any = {
     TDO_FILMBREAK: '破膜',
     SHUTDOWN: '停机',
@@ -46,7 +51,7 @@ const obj:any = {
             >{{roll.labelId || obj[roll?.reason?.reasonType]}}</text>
         </g>
         <g id="rolls-icons">
-            <g v-if="data.length > 0" v-for="(roll, ind) in data.filter((item,i) => !item.status && i!==data.length-1)" shape-rendering="auto"
+            <g v-if="data.length > 0" v-for="(roll, ind) in data.filter((item:any,i:number) => !item.status && i!==data.length-1)" shape-rendering="auto"
                 :style="{transform: `translate(${roll.width >= 120 ? roll.x + roll.width / 2 - 50 : roll.x + roll.width / 2}px, 6px) scale(0.9)`}"
             >
                 <path :d="icons.rollPath" fill="#FFF"></path>
@@ -59,7 +64,7 @@ const obj:any = {
                 class="tick"
                 :class="{ minor: i % 12 === 0}"
                 opacity="1"
-                :transform="`translate(${1880/144 * i + 10},0)`"
+                :transform="`translate(${ firstWidth + fiveMinuteWidth * i + left},0)`"
             >
                 <line stroke="currentColor" :y2="i % 12 === 0 ? 9 : 6"></line>
                 <text v-if="i % 12 === 0" fill="#000" y="14" dy="0.71em">{{time}}</text>

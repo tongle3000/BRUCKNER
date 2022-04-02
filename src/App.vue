@@ -1,16 +1,14 @@
 <script setup lang="ts">
+import { reactive, onMounted, onBeforeUnmount, computed } from 'vue';
 import BFilmTimeLine from './components/BFilmTimeLine.vue'
-import Profile4scanLates from './components/Profile4scanLates.vue'
 import * as api from './api';
-import { reactive, onMounted, onBeforeUnmount } from 'vue';
 import moment from 'moment';
 import { getDateArray } from './utils/common'
 import BarSvg from './views/html/BarSvg.vue'
 import Map from './views/html/Map.vue'
-import NDCRuler from './views/html/NDCRuler.vue'
 import Profile from './views/Profile/index.vue';
 
-interface IbFilmTimeLine {
+interface IBFilmTimeLine {
 	_class?: string;
     startTimestamp?: string;
     endTimestamp?: string;
@@ -27,36 +25,29 @@ interface IbFilmTimeLine {
 	x?: number;
 }
 
-const data: { bFilmTimeLine: IbFilmTimeLine[], timeLineArr: any [], profile4scanLatesData: object } = reactive({
+interface IData {
+	bFilmTimeLine: IBFilmTimeLine[],
+	timeLineArr: any [],
+	profile4scanLatesData: object,
+}
+
+const data: IData = reactive({
 	bFilmTimeLine: [],
 	timeLineArr: [],
 	profile4scanLatesData: {}
 })
 
-let timer: any = null;
-let start: string, end: string, startTimeNum:number, endTimeNum:number, timeSpace:number;
+let timer:any = null;
 
-onMounted(() => {
-	getBFilmTimeLine();
-	timer = setInterval(() => {
-		getBFilmTimeLine()
-	}, 20000)
-})
-const getBFilmTimeLine = async () => {
-	start = moment(new Date()).subtract(12, 'hours').utc().toISOString();
-	end = moment(new Date()).utc().toISOString();
-	startTimeNum = new Date(start).getTime();
-	endTimeNum = new Date(end).getTime();
-	timeSpace = new Date(end).getTime() - new Date(start).getTime();
+const getBFilmTimeLine = () => {
+	const newDate = new Date();
+	const start: string = moment(newDate).subtract(12, 'hours').utc().toISOString();
+	const end: string = moment(newDate).utc().toISOString();
+	const startTimeNum:number = new Date(start).getTime();
+	const endTimeNum:number = newDate.getTime();
+	const timeSpace:number = endTimeNum - startTimeNum;
 
-
-	data.timeLineArr = getDateArray();
-
-	console.log('------------------', data.timeLineArr)
-
-
-	try {
-		const result: any = await api.getLineState({ start, end });
+	api.getLineState({ start, end }).then((result: any) => {
 
 		let totalWidth = 0;
 		data.bFilmTimeLine = result.map((item: any, ind: number) => {
@@ -75,17 +66,39 @@ const getBFilmTimeLine = async () => {
 		})
 		console.log('data.bFilmTimeLine', data.bFilmTimeLine);
 		console.log(result);
-	} catch (error) {
-		clearInterval(timer);
-		timer = null;
-	} finally {
-		// 厚度数据接口
-		api.getProfile4scanLatest().then(res => {
-			console.log('厚度数据', res)
-			data.profile4scanLatesData = res;
-		})
-	}
+	}).catch((error) => {
+		// clearInterval(timer);
+		// timer = null;
+	})
 }
+//
+// 厚度数据接口
+const getThickness = () => {
+	api.getProfile4scanLatest().then(res => {
+		console.log('厚度数据', res)
+		data.profile4scanLatesData = res;
+	})
+}
+
+// 正常第一个色； 停机第二色；
+const fillColor = computed(() => {
+    return true ? 'rgb(0, 185, 109)' : 'rgb(227, 64, 160)';
+})
+
+
+const countData = () => {
+	data.timeLineArr = getDateArray();
+	getBFilmTimeLine();
+	getThickness();
+} 
+
+onMounted(() => {
+	countData();
+	timer = setInterval(() => {
+		countData();
+	}, 60000)
+})
+
 onBeforeUnmount(() => {
 	clearInterval(timer);
 	timer = null;
@@ -95,19 +108,17 @@ onBeforeUnmount(() => {
 
 <template>
 	<BFilmTimeLine :data="data.bFilmTimeLine" :timeLineArr="data.timeLineArr" />
-	<div style="width: 1480px; height:350px; min-height: 300px;">
-		<Profile :data="data.profile4scanLatesData" />
+	<div style="width: 1480px; height:300px; min-height: 300px;">
+		<Profile :data="data.profile4scanLatesData" :fillColor="fillColor" />
 	</div>
 	<!-- <img alt="Vue logo" src="./assets/logo.png" /> -->
 	<!-- <ul>
 		<li v-for="item in data.bFilmTimeLine">{{item.labelId}}</li>
 	</ul> -->
 
-	<Profile4scanLates :data="data.profile4scanLatesData" />
 	<div>壮壮图</div>
 	<BarSvg />
 	<Map />
-	<NDCRuler :data="data.profile4scanLatesData" />
 </template>
 
 

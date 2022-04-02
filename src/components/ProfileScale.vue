@@ -1,5 +1,8 @@
+<script setup lang="ts">
+defineProps({svgSize: Object});
+</script> 
 <template>
-    <g id="profile-scale" style="transform:translateY(243px);" data-v-adb0913a>
+    <g id="profile-scale" :style="`transform:translateY(${svgSize?.height - 25}px)`" data-v-adb0913a>
         <g
             class="profile-scale"
             fill="none"

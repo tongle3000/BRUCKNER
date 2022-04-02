@@ -2,7 +2,7 @@
 import { reactive, computed, onMounted } from 'vue';
 import { dragX } from '../utils/common';
 // const props = defineProps({data: Object});
-const props = defineProps({data: Object});
+const props = defineProps({data: Object, svgSize: Object});
 // interface IObj {
 //     aggregatedAverage: number,
 //     aggregatedMaximum: number,
@@ -23,29 +23,29 @@ const props = defineProps({data: Object});
 // });
 
 
-// 高度243px  46格
+// 高度rulerHeight  46格
 // 0.5 10个，一个0.05μm
 // 尺子上下限是23格*0.05=1.15μm,  共46格 * 0.05 =2.30μm
 // 画2个同样的svg, 绿色 svg 上下限是10格 1μm； 红色svg 上下无限制；value 差值超过上下限1μm，红色svg会超出显示，同时尺子的限值得加上超出的值；
-const rulerConst: { space: number,default:number,rulerLeft: number, maxWidth:number } = reactive({
+const rulerConst: { space: number,default:number,rulerLeft: number} = reactive({
     space: 0.05,
     default: 20, // 或超出的值
-    rulerLeft: 62,
-    maxWidth: 1180
+    rulerLeft: 62
 })
 const rulerLeft:number = 62;
+const rulerHeight: any = computed(() => props.svgSize?.height - 25)
 
-const rulerArr = computed(() =>{
+const rulerArr: any = computed(() => {
     if(!props.data) return;
     const average: number = props.data.aggregatedAverage;
 
-    const topNum = average + (rulerConst.default + 3) * rulerConst.space;
-    const endNum = average- (rulerConst.default + 3) * rulerConst.space;
+    const topNum = Math.ceil((average + (rulerConst.default + 3) * rulerConst.space) * 10) / 10;
+    const endNum = Math.ceil((average- (rulerConst.default + 3) * rulerConst.space) * 10) / 10;
     const newArr = [];
     for (let i = endNum; i <= topNum; i = i + rulerConst.space) {
-        newArr.push(i)
+        newArr.push(i.toFixed(1))
     }
-    console.log('newArr',endNum, newArr)
+    console.log('newArr',topNum, newArr)
     return newArr;
 })
 
@@ -55,41 +55,7 @@ const rulerArr = computed(() =>{
             <g class="diebolts hidden" />
             <g class="normalizedThicknessProfile">
                 <g :style="{transform: `translateX(${rulerConst.rulerLeft}px)`}" style="fill: rgb(85, 85, 85);">
-                    <path
-                        class="measurment-scale-drag"
-                        d="M-62,244 c 0 0 0 3 0 10 c 6.6 6.4 54 6.4 62 0 c 0 -7 0 -10 0 -10 H 0 z"
-                        style="stroke: rgb(85, 85, 85);"
-                        @mousedown="dragX($event, rulerConst, rulerLeft)"
-                    />
-                    <g class="decoration">
-                        <rect
-                            x="-31"
-                            y="247"
-                            width="1"
-                            height="8"
-                            class="decoratorLine middle"
-                            fill="white"
-                            style="pointer-events: none"
-                        />
-                        <rect
-                            x="-34"
-                            y="247"
-                            width="1"
-                            height="8"
-                            class="decoratorLine left"
-                            fill="white"
-                            style="pointer-events: none"
-                        />
-                        <rect
-                            x="-28"
-                            y="247"
-                            width="1"
-                            height="8"
-                            class="decoratorLine right"
-                            fill="white"
-                            style="pointer-events: none"
-                        />
-                    </g>
+                    
                     <g
                         class="measurment-scale"
                         fill="none"
@@ -98,23 +64,24 @@ const rulerArr = computed(() =>{
                         text-anchor="start"
                         style="transform: translateX(-62px);"
                     >
+                        <!-- 左边刻度尺的线 现在是隐藏 -->
                         <path
                             class="domain"
                             stroke="currentColor"
-                            d="M6,243.5H0.5V0.5H6"
+                            :d="`M6,${rulerHeight}.5H0.5V0.5H6`"
                             style="stroke: rgb(85, 85, 85);"
                         />
 
 
 
-                            
+                        <!-- 左边刻度 和值 -->
                         <g
                             v-for="(item, ind) in rulerArr" :key="ind"
                             class="tick"
                             :class="{major: ind % 10 === 0}"
 
                             opacity="1"
-                            :transform="`translate(0,${243 / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
+                            :transform="`translate(0,${rulerHeight / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
                         >
                             <line stroke="currentColor" :x2="ind % 10 === 0 ? 6 : 3" style="stroke: rgb(85, 85, 85);" />
                             <text
@@ -123,7 +90,7 @@ const rulerArr = computed(() =>{
                                 dy="0.32em"
                                 text-anchor="middle"
                                 style="fill: rgb(85, 85, 85);"
-                            >{{ind % 10 === 0 ? item.toFixed(2) : ''}}</text>
+                            >{{ind % 10 === 0 ? item : ''}}</text>
                         </g>
 
 
@@ -139,21 +106,22 @@ const rulerArr = computed(() =>{
                         font-family="sans-serif"
                         text-anchor="end"
                     >
+                        <!-- 右边刻度尺的线 现在是隐藏 -->
                         <path
                             class="domain"
                             stroke="currentColor"
-                            d="M-6,243.5H0.5V0.5H-6"
+                            :d="`M-6,${rulerHeight}.5H0.5V0.5H-6`"
                             style="stroke: rgb(85, 85, 85);"
                         />
 
-
+                        <!-- 右边刻度 -->
                         <g
                             v-for="(item, ind) in rulerArr" :key="ind"
                             class="tick"
                             :class="{major: ind % 10 === 0}"
 
                             opacity="1"
-                            :transform="`translate(0,${243 / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
+                            :transform="`translate(0,${rulerHeight / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
                         >
                             <line stroke="currentColor" :x2="ind % 10 === 0 ? -6 : -3" style="stroke: rgb(85, 85, 85);" />
                             <text
@@ -162,17 +130,37 @@ const rulerArr = computed(() =>{
                                 dy="0.32em"
                                 text-anchor="middle"
                                 style="fill: rgb(85, 85, 85);"
-                            >{{ind % 10 === 0 ? item.toFixed(2) : ''}}</text>
+                            >{{ind % 10 === 0 ? item : ''}}</text>
                         </g>
 
                     </g>
-
+                    
+                    <!-- 拖动的块 -->
+                    <path
+                        class="measurment-scale-drag"
+                        :d="`M-62,${rulerHeight+1} c 0 0 0 3 0 10 c 6.6 6.4 54 6.4 62 0 c 0 -7 0 -10 0 -10 H 0 z`"
+                        style="stroke: rgb(85, 85, 85);"
+                        @mousedown="dragX($event, rulerConst, props.svgSize?.width, rulerLeft)"
+                    />
+                    <g class="decoration">
+                        <rect
+                            v-for="i of 3" :key="i"
+                            :x="-28 - i*3"
+                            :y="rulerHeight+4"
+                            width="1"
+                            height="8"
+                            class="decoratorLine"
+                            :class="i === 1 ? 'right' : i===2 ? 'middle': 'left'"
+                            fill="white"
+                            style="pointer-events: none"
+                        />
+                    </g>
 
                     <rect
                         class="measurment-scale-background"
                         x="-62"
                         y="0"
-                        height="243"
+                        :height="rulerHeight"
                         width="62"
                     />
                     <g class="mesurement-label" transform="translate(5, 16)">
