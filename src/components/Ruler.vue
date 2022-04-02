@@ -27,27 +27,47 @@ const props = defineProps({data: Object, svgSize: Object});
 // 0.5 10个，一个0.05μm
 // 尺子上下限是23格*0.05=1.15μm,  共46格 * 0.05 =2.30μm
 // 画2个同样的svg, 绿色 svg 上下限是10格 1μm； 红色svg 上下无限制；value 差值超过上下限1μm，红色svg会超出显示，同时尺子的限值得加上超出的值；
-const rulerConst: { space: number,default:number,rulerLeft: number} = reactive({
+const rulerConst: { space: number,count:number,rulerLeft: number, centerY: number,defaultH:number} = reactive({
     space: 0.05,
-    default: 20, // 或超出的值
-    rulerLeft: 62
+    count: 56, // 或超出的值
+    rulerLeft: 62,
+    centerY: 0,
+    defaultH: 2.8, // 默认显示2.8μm 高度
+    // rulerArr: []
 })
-const rulerLeft:number = 62;
+const left:number = 62;
 const rulerHeight: any = computed(() => props.svgSize?.height - 25)
 
 const rulerArr: any = computed(() => {
     if(!props.data) return;
-    const average: number = props.data.aggregatedAverage;
+    const referenceValue: number = props.data.referenceValue;
 
-    const topNum = Math.ceil((average + (rulerConst.default + 3) * rulerConst.space) * 10) / 10;
-    const endNum = Math.ceil((average- (rulerConst.default + 3) * rulerConst.space) * 10) / 10;
+    // const maxNum = Math.ceil((referenceValue + rulerConst.default* rulerConst.space) * 10) / 10;
+    // const minNum = Math.ceil((referenceValue - rulerConst.default * rulerConst.space) * 10) / 10;
+    // const maxNum = referenceValue + 28*0.05
+    const minNum = referenceValue - rulerConst.count / 2 * rulerConst.space;
     const newArr = [];
-    for (let i = endNum; i <= topNum; i = i + rulerConst.space) {
-        newArr.push(i.toFixed(1))
+    for (let i = 0; i < rulerConst.count; i++) {
+        newArr.push(minNum + i*rulerConst.space)
     }
-    console.log('newArr',topNum, newArr)
+    console.log('newArr',minNum, newArr)
     return newArr;
 })
+
+
+const mousewheel = (e:any) => {
+    console.log('e', e.offsetY)
+    rulerConst.defaultH += e.wheelDelta / 120 / 40; // 0.025
+    // 计算鼠标Y轴对应的μm
+    rulerConst.centerY = e.offsetY / rulerHeight * rulerConst.defaultH;
+
+    e.wheelDelta > 0 ? rulerConst.count += 6 : rulerConst.count -= 6;
+
+    // rulerConst.space += (e.wheelDelta / 12) / rulerConst.default * rulerConst.space;
+    console.log('111111111111111111111', rulerConst.centerY )
+
+}
+
 
 </script>
 <template>
@@ -81,7 +101,7 @@ const rulerArr: any = computed(() => {
                             :class="{major: ind % 10 === 0}"
 
                             opacity="1"
-                            :transform="`translate(0,${rulerHeight / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
+                            :transform="`translate(0,${rulerHeight / rulerConst.count * (rulerArr.length - ind) })`"
                         >
                             <line stroke="currentColor" :x2="ind % 10 === 0 ? 6 : 3" style="stroke: rgb(85, 85, 85);" />
                             <text
@@ -121,7 +141,7 @@ const rulerArr: any = computed(() => {
                             :class="{major: ind % 10 === 0}"
 
                             opacity="1"
-                            :transform="`translate(0,${rulerHeight / ((rulerConst.default + 3) * 2) * (rulerArr.length - ind) })`"
+                            :transform="`translate(0,${rulerHeight / rulerConst.count * (rulerArr.length - ind) })`"
                         >
                             <line stroke="currentColor" :x2="ind % 10 === 0 ? -6 : -3" style="stroke: rgb(85, 85, 85);" />
                             <text
@@ -138,9 +158,9 @@ const rulerArr: any = computed(() => {
                     <!-- 拖动的块 -->
                     <path
                         class="measurment-scale-drag"
-                        :d="`M-62,${rulerHeight+1} c 0 0 0 3 0 10 c 6.6 6.4 54 6.4 62 0 c 0 -7 0 -10 0 -10 H 0 z`"
+                        :d="`M-${left},${rulerHeight+1} c 0 0 0 3 0 10 c 6.6 6.4 54 6.4 62 0 c 0 -7 0 -10 0 -10 H 0 z`"
                         style="stroke: rgb(85, 85, 85);"
-                        @mousedown="dragX($event, rulerConst, props.svgSize?.width, rulerLeft)"
+                        @mousedown="dragX($event, rulerConst, props.svgSize?.width, left)"
                     />
                     <g class="decoration">
                         <rect
@@ -162,6 +182,7 @@ const rulerArr: any = computed(() => {
                         y="0"
                         :height="rulerHeight"
                         width="62"
+                        @mousewheel.prevent="mousewheel"
                     />
                     <g class="mesurement-label" transform="translate(5, 16)">
                         <text style="fill: rgb(85, 85, 85);">

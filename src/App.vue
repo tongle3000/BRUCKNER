@@ -7,6 +7,8 @@ import { getDateArray } from './utils/common'
 import BarSvg from './views/html/BarSvg.vue'
 import Map from './views/html/Map.vue'
 import Profile from './views/Profile/index.vue';
+import { profile4scanLatesData, bFilmTimeLine } from './api/data';
+import { message } from 'ant-design-vue';
 
 interface IBFilmTimeLine {
 	_class?: string;
@@ -67,8 +69,26 @@ const getBFilmTimeLine = () => {
 		console.log('data.bFilmTimeLine', data.bFilmTimeLine);
 		console.log(result);
 	}).catch((error) => {
-		// clearInterval(timer);
-		// timer = null;
+		message.error('接口异常，现在读取的是静态数据！')
+		// 如果拉不到数据，就读静态数据
+		let totalWidth = 0;
+		data.bFilmTimeLine = bFilmTimeLine.map((item: any, ind: number) => {
+			const width = ind === 0 ? (new Date(item.endTimestamp).getTime() - startTimeNum) * 1880 / timeSpace
+				: ind === bFilmTimeLine.length - 1
+				? (endTimeNum - new Date(item.startTimestamp).getTime()) * 1880 / timeSpace
+				: (new Date(item.endTimestamp).getTime() - new Date(item.startTimestamp).getTime()) * 1880 / timeSpace;
+			
+			item = {
+				...item,
+				width,
+				x: totalWidth
+			}
+			totalWidth += width;
+			return item;
+		})
+		console.log('data.bFilmTimeLine', data.bFilmTimeLine);
+		console.log(bFilmTimeLine);
+
 	})
 }
 //
@@ -77,6 +97,10 @@ const getThickness = () => {
 	api.getProfile4scanLatest().then(res => {
 		console.log('厚度数据', res)
 		data.profile4scanLatesData = res;
+	}).catch((err) => {
+		message.error('接口异常，现在读取的是静态数据！')
+		// 如果拉不到数据，就读静态数据
+		data.profile4scanLatesData = profile4scanLatesData
 	})
 }
 

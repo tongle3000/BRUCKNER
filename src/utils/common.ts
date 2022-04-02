@@ -1,5 +1,9 @@
 import moment from 'moment';
 
+export const rulerMousewheel = () => {
+
+}
+
 /**
  * 算出12个小时梅分钟的时间数组
  * @param endDate 最新时间
